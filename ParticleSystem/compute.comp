@@ -1,0 +1,60 @@
+#version 430
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+uniform float dt;
+uniform float speed;
+uniform vec3 initPos;
+
+layout(std430, binding = 0) buffer DataBuffer {
+    vec4 position[];
+};
+
+layout(std430, binding = 1) buffer DataBuffer2
+{
+	vec4 vel[];
+};
+
+layout(std430, binding = 2) buffer DataBuffer3
+{
+	vec4 scale[];
+};
+
+
+float scaleRandomValue(float v, float min, float max){
+    return mix(min, max, v);
+}
+
+float rand(vec2 co, float min, float max) {
+    float val = fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    return scaleRandomValue(val,min, max);
+}
+
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    if(index >= 3000) return;
+
+    position[index].x += vel[index].x * dt*speed;
+    position[index].y += vel[index].y * dt*speed;
+    position[index].z += vel[index].z * dt*speed;
+
+    position[index].w -= 0.1f * dt; //life of particle
+
+    vec2 seed = vec2(index, 12);
+    if(position[index].w <= 0.0){
+        position[index].w = 1.0;
+
+        position[index].x = initPos.x;
+        position[index].y = initPos.y;
+        position[index].z = initPos.z;
+
+        vel[index].x = rand(seed, -3, 3);
+        vel[index].y = rand(seed, 0, 3);
+        vel[index].z = rand(seed, -3, 3);
+
+    }
+
+    
+}
